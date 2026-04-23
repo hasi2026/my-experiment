@@ -1,0 +1,106 @@
+!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心理学実験室</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* カスタムスタイルの追加 */
+        body {
+            background-color: #f3f4f6; /* 薄いグレー */
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 2rem;
+        }
+
+        /* カスタムアラート（alert()の代わり） */
+        #custom-alert {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 1000;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>心理学実験室へようこそ</h1>
+        
+        <button id="start-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out shadow-lg transform hover:scale-105">
+            実験を開始する
+        </button>
+    </div>
+
+    <!-- カスタムメッセージボックス（ブラウザのalertの代わり） -->
+    <div id="overlay"></div>
+    <div id="custom-alert">
+        <p class="text-lg font-semibold mb-4">Hello World!</p>
+        <button id="close-btn" class="bg-gray-800 text-white py-1 px-4 rounded hover:bg-gray-700">閉じる</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const startBtn = document.getElementById('start-btn');
+            const customAlert = document.getElementById('custom-alert');
+            const overlay = document.getElementById('overlay');
+            const closeBtn = document.getElementById('close-btn');
+
+            // 実験開始ボタンのクリックイベント
+            startBtn.addEventListener('click', () => {
+                showModal();
+            });
+
+            // 閉じるボタンのクリックイベント
+            closeBtn.addEventListener('click', () => {
+                hideModal();
+            });
+
+            // モーダル表示
+            function showModal() {
+                customAlert.style.display = 'block';
+                overlay.style.display = 'block';
+            }
+
+            // モーダル非表示
+            function hideModal() {
+                customAlert.style.display = 'none';
+                overlay.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
