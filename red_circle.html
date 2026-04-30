@@ -1,0 +1,90 @@
+E html>
+<html>
+<head>
+  <title>jsPsych Experiment</title>
+  <!-- Load jsPsych v7 from CDN -->
+  <script src="https://unpkg.com/jspsych@7.3.4"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+  <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
+  <style>
+    /* 1. Background color set to gray */
+    body {
+      background-color: #808080;
+      color: white; /* Make text readable on gray background */
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 2. Style for the red circle (100px diameter) */
+    .red-circle {
+      width: 100px;
+      height: 100px;
+      background-color: #ff0000;
+      border-radius: 50%;
+      margin: 0 auto;
+    }
+
+    /* Centering container */
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .instruction {
+      margin-top: 20px;
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body></body>
+<script>
+  /**
+   * Simple jsPsych Experiment: Red Circle Display
+   */
+
+  // Initialize jsPsych
+  const jsPsych = initJsPsych({
+    on_finish: function() {
+      // Optional: Display results to console
+      jsPsych.data.displayData();
+    }
+  });
+
+  const timeline = [];
+
+  // Trial 1: Display the red circle
+  const circleTrial = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `
+      <div class="container">
+        <div class="red-circle"></div>
+        <div class="instruction">スペースキーを押して終了してください</div>
+      </div>
+    `,
+    choices: [' '], // 3. Continue until space key is pressed
+    data: {
+      component: 'red_circle_test'
+    }
+  };
+  timeline.push(circleTrial);
+
+  // Trial 2: 4. Final message
+  const endMessage = {
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `
+      <div class="container">
+        <p style="font-size: 24px;">終了しました。ありがとうございました。</p>
+      </div>
+    `,
+    choices: "NO_KEYS", // Prevent further interaction
+    trial_duration: 3000 // Show for 3 seconds before ending
+  };
+  timeline.push(endMessage);
+
+  // Run the experiment
+  jsPsych.run(timeline);
+
+</script>
+</html>
