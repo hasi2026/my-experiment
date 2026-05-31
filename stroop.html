@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+    <!-- 参加者情報入力用のsurvey-textプラグイン -->
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <style>
@@ -71,23 +73,92 @@
             padding: 10px 30px !important;
             margin-top: 20px;
         }
+
+        /* 送信ステータス画面用のスタイル */
+        .status-container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background-color: #fcfcfc;
+        }
+        .status-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .status-message {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        /* スピナーアニメーション */
+        .spinner {
+            margin: 20px auto;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error-text {
+            color: #e74c3c;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div id="jspsych-target"></div>
 
     <script>
+        // 送信先GASのURL
+        const GAS_URL = "https://script.google.com/macros/s/AKfycby9zyf_NvkziUNDGE31MfnMpZLuCFbRJBzXUBot3bSNAypM7APNzGHHzuc1p3vdwrquDA/exec";
+
         const jsPsych = initJsPsych({
             display_element: 'jspsych-target',
             on_finish: function() {
-                // 実験終了時にCSV形式でデータを表示
-                jsPsych.data.displayData('csv');
+                // 実験終了時に不要な行を除去し、必要なデータ列のみ抽出して自動送信
+                sendExperimentData();
             }
         });
 
         const timeline = [];
 
-        // 実験開始ボタン（全画面化の代わりにボタンを使用）
+        // 1. 参加者情報（ID）の入力画面
+        const participant_id_screen = {
+            type: jsPsychSurveyText,
+            questions: [
+                {
+                    prompt: '<div class="instruction-text"><p>参加者ID（例：学籍番号）を入力してください。</p></div>',
+                    placeholder: '学籍番号や識別ID',
+                    required: true,
+                    name: 'participant_id'
+                }
+            ],
+            button_label: '次へ進む',
+            on_finish: function(data) {
+                // 入力されたIDを取得
+                const id = data.response.participant_id;
+                const timestamp = new Date().toISOString(); // 実施日時
+
+                // jsPsychの全体データにIDと実施日時をグローバルプロパティとして追加
+                jsPsych.data.addProperties({
+                    subject_id: id,
+                    timestamp: timestamp
+                });
+            }
+        };
+        timeline.push(participant_id_screen);
+
+        // 2. 実験開始ボタン
         const start_screen = {
             type: jsPsychHtmlButtonResponse,
             stimulus: `
@@ -100,7 +171,7 @@
         };
         timeline.push(start_screen);
 
-        // 教示画面
+        // 3. 教示画面
         const instructions = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: `
@@ -119,6 +190,7 @@
         };
         timeline.push(instructions);
 
+        // 刺激定義
         const stroop_stimuli = [
             // 一致条件 (Congruent)
             { word: "赤", color: "red", condition: "congruent", correct_response: "r" },
@@ -133,7 +205,7 @@
             { word: "緑", color: "blue", condition: "incongruent", correct_response: "b" }
         ];
 
-        // 1. 注視点 (+) 500ms
+        // 4. 注視点 (+) 500ms
         const fixation = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '<div class="fixation">+</div>',
@@ -142,7 +214,7 @@
             data: { task: 'fixation' }
         };
 
-        // 2. 刺激提示（キー入力があるまで無限に表示）
+        // 5. 刺激提示
         const stimulus_trial = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: function() {
@@ -162,12 +234,13 @@
                 correct_response: jsPsych.timelineVariable('correct_response')
             },
             on_finish: function(data) {
-                // 正誤判定
-                data.correct = (data.response == data.correct_response);
+                // 正誤判定を文字列の 'true' または 'false' に変換して確実に保存する
+                const isCorrect = (data.response === data.correct_response);
+                data.correct = isCorrect ? 'true' : 'false';
             }
         };
 
-        // 3. 試行間隔 (ITI) 1000ms
+        // 6. 試行間隔 (ITI) 1000ms
         const iti = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: '',
@@ -176,17 +249,118 @@
             data: { task: 'iti' }
         };
 
+        // 試行プロシージャの設定（全10試行、復元抽出）
         const test_procedure = {
             timeline: [fixation, stimulus_trial, iti],
             timeline_variables: stroop_stimuli,
             sample: {
-                type: 'with-replacement', // 復元抽出
-                size: 10                  // 合計10試行
+                type: 'with-replacement',
+                size: 10
             }
         };
         timeline.push(test_procedure);
 
-        // 実行
+        // 指数バックオフを用いたGASへのデータ送信関数
+        async function postDataWithExponentialBackoff(url, data, maxRetries = 5) {
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        mode: 'no-cors', // クロスオリジン制約を回避するためno-corsを設定
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+                    // no-cors の場合、レスポンス内容は不透明(opaque)になりますが、送信自体は成功するためそのまま解決します
+                    return true;
+                } catch (error) {
+                    // 指数バックオフの待機時間を計算 (1s, 2s, 4s, 8s, 16s)
+                    const delay = Math.pow(2, attempt) * 1000;
+                    if (attempt < maxRetries - 1) {
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    } else {
+                        throw error; // 全てのリトライが失敗した場合はエラーをスロー
+                    }
+                }
+            }
+        }
+
+        // 実験データ抽出・整形・送信全体の処理
+        function sendExperimentData() {
+            const displayElement = jsPsych.getDisplayElement();
+
+            // 送信中画面の描画
+            displayElement.innerHTML = `
+                <div class="status-container">
+                    <div class="status-title">データ送信中</div>
+                    <div class="spinner"></div>
+                    <div class="status-message">
+                        実験データをサーバーに安全に送信しています。<br>
+                        画面を閉じずにしばらくお待ちください。
+                    </div>
+                </div>
+            `;
+
+            // 不要な行（教示、注視点、ITIなど）を除外して 'task: response' のみ抽出
+            const rawData = jsPsych.data.get().filter({ task: 'response' }).values();
+
+            // 分析に必要な列（ID、日時、単語、色、条件、RT、正誤）のみを抽出して整形
+            const formattedData = rawData.map(trial => {
+                return {
+                    subject_id: trial.subject_id,
+                    timestamp: trial.timestamp,
+                    word: trial.word,
+                    color: trial.color,
+                    condition: trial.condition,
+                    rt: trial.rt,
+                    correct: trial.correct // 'true' または 'false' が確実にセットされている
+                };
+            });
+
+            // GASへ整形済みJSONデータを送信
+            postDataWithExponentialBackoff(GAS_URL, formattedData)
+                .then(() => {
+                    // 送信成功時の表示
+                    displayElement.innerHTML = `
+                        <div class="status-container">
+                            <div class="status-title">送信完了</div>
+                            <div class="status-message" style="color: #27ae60;">
+                                実験データは正常に記録されました。<br>
+                                ご協力ありがとうございました。
+                            </div>
+                        </div>
+                    `;
+                })
+                .catch((error) => {
+                    // 送信エラー時のフォールバック表示（画面上にCSVを表示してコピーを促す）
+                    console.error("Data submission failed: ", error);
+                    
+                    // CSV文字列の生成
+                    const headers = ["subject_id", "timestamp", "word", "color", "condition", "rt", "correct"];
+                    const csvRows = [headers.join(",")];
+                    formattedData.forEach(row => {
+                        const values = headers.map(header => {
+                            const val = row[header];
+                            return typeof val === 'string' ? `"${val}"` : val;
+                        });
+                        csvRows.push(values.join(","));
+                    });
+                    const csvContent = csvRows.join("\n");
+
+                    displayElement.innerHTML = `
+                        <div class="status-container" style="max-width: 800px; text-align: left;">
+                            <div class="status-title error-text">データの自動送信に失敗しました</div>
+                            <div class="status-message">
+                                接続エラーが発生しました。お手数ですが、以下のCSVデータをすべてコピーして、実験担当者へお渡しください。
+                            </div>
+                            <textarea style="width: 100%; height: 200px; font-family: monospace; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px;" readonly>${csvContent}</textarea>
+                        </div>
+                    `;
+                });
+        }
+
+        // 実行開始
         jsPsych.run(timeline);
     </script>
 </body>
