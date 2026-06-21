@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ミュラー・リヤー錯視調整法実験</title>
+  <!-- jsPsych CDN -->
+  <script src="https://unpkg.com/jspsych@7.3.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-canvas-slider-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.0/css/jspsych.css">
+  
+  <style>
+    /* 画面全体の上下左右中央配置 */
+    body {
+      background-color: #f7f7f7;
+      color: #333;
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    
+    .jspsych-content-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .jspsych-content {
+      width: 95%;
+      max-width: 700px;
+      padding: 25px 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    /* キャンバスのレスポンシブ化 */
+    canvas {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background-color: #ffffff;
+      margin-bottom: 20px;
+      max-width: 100%;
+      height: auto !important; /* アスペクト比を維持してスマートに縮小 */
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* 試行数表示プロンプトのスタイリング */
+    .trial-counter {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 15px;
+    }
+
+    /* 教示テキスト of HTML */
+    .instruction-text {
+      text-align: left;
+      line-height: 1.8;
+      margin-bottom: 25px;
+      font-size: 0.95rem;
+    }
+
+    /* ボタンのスタイリング */
+    .btn-start, .jspsych-btn {
+      background-color: #4A90E2 !important;
+      color: white !important;
+      border: none !important;
+      padding: 12px 30px !important;
+      font-size: 1rem !important;
+      border-radius: 6px !important;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin: 5px;
+    }
+
+    .btn-start:hover, .jspsych-btn:hover {
+      background-color: #357ABD !important;
+    }
+
+    .btn-start:active, .jspsych-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* デバイス選択用の選択肢ボタン */
+    .device-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 300px;
+      margin: 20px auto 0 auto;
+    }
+
+    /* スライダーの見た目カスタマイズ */
+    .jspsych-sliders-response-container {
+      margin-top: 15px;
+      padding: 0 10px;
+    }
+    
+    input[type=range] {
+      width: 100%;
+      max-width: 400px;
+      height: 8px;
+      background: #ddd;
+      border-radius: 4px;
+      outline: none;
+    }
+
+    /* テキスト入力フォーム調整 */
+    .jspsych-survey-text-question {
+      margin: 20px 0;
+      text-align: left;
+    }
+    .jspsych-survey-text-question input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+
+  <script>
+    // GAS URL の定義
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyevNCiuPLaKK2zA-1ksxk9BknZppTZaAIOt-n15eRIkf4_ERo6D9HcWMBQ_B12Ge5C_A/exec';
+
+    // jsPsychの初期化
+    const jsPsych = initJsPsych({
+      display_element: 'jspsych-target',
+      on_finish: function() {
+        // 表示要素を取得して書き換える
+        const display_element = jsPsych.getDisplayElement();
+        display_element.innerHTML = `
+          <div class="instruction-text" style="text-align: center;">
+            <h3 style="color: #4A90E2; margin-top: 20px;">データを送信中です...</h3>
+            <p>ブラウザを閉じずにそのままお待ちください。</p>
+          </div>
+        `;
+
+        // 保存用データの構築
+        const trials_data = jsPsych.data.get().filter({task: 'adjust'}).values();
+        const subject_id = jsPsych.data.get().select('subject_id').values[0] || 'unknown';
+        const timestamp = new Date().toLocaleString('ja-JP');
+
+        // 指定 of データ列にフォーマット
+        const response_data = trials_data.map(d => ({
+          subject_id: subject_id,
+          timestamp: timestamp,
+          angle: d.angle,
+          wing_length: d.wing_length,
+          pse: d.adjusted_length,
+          error_amount: d.illusion_magnitude
+        }));
+
+        // JSON形式のデータをBlob（生データ）としてプレーンテキストでカプセル化
+        const blob = new Blob([JSON.stringify(response_data)], { type: 'text/plain; charset=UTF-8' });
+
+        // GASへPOST送信
+        // keepalive: true により、送信中にブラウザ処理が中断されるのを防ぎます
+        fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: blob,
+          keepalive: true
+        })
+        .then(() => {
+          // 送信リクエストの射出が成功した時点で完了表示に切り替え
+          display_element.innerHTML = `
+            <div class="instruction-text" style="text-align: center;">
+              <h2 style="color: #4A90E2; margin-top: 20px;">実験終了</h2>
+              <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 20px;">実験終了。ご協力ありがとうございました。</p>
+            </div>
+          `;
+        })
+        .catch((err) => {
+          // 万が一ブラウザ側でフェッチエラーが出た場合のフォールバック（no-corsでもここを通ることがあります）
+          console.warn('Fetch finished (Note: no-cors mode always triggers warning/error in browser console, this is expected):', err);
+          display_element.innerHTML = `
+            <div class="instruction-text" style="text-align: center;">
+              <h2 style="color: #4A90E2; margin-top: 20px;">実験終了</h2>
+              <p style="font-size: 1.1rem; font-weight: bold; margin-bottom: 20px;">実験終了。ご協力ありがとうございました。</p>
+            </div>
+          `;
+        });
+      }
+    });
+
+    // 独立変数の定義
+    const angles = [15, 75]; // 羽の角度（度）
+    const shaft_lengths = [20, 50]; // 羽の長さ（px）
+    const repetitions = 3; // 各条件の繰り返し数
+
+    // 試行の基礎条件リスト作成 (2×2 = 4条件)
+    let trial_conditions = [];
+    for (let angle of angles) {
+      for (let len of shaft_lengths) {
+        trial_conditions.push({
+          angle: angle,
+          wing_length: len
+        });
+      }
+    }
+
+    // 12試行分（4条件 × 3回）のリストを作成し、シャッフル
+    let full_trials = [];
+    for (let r = 0; r < repetitions; r++) {
+      full_trials = full_trials.concat(JSON.parse(JSON.stringify(trial_conditions)));
+    }
+    full_trials = jsPsych.randomization.shuffle(full_trials);
+
+    // 総試行数
+    const total_trials = full_trials.length;
+
+    // タイムラインの初期化
+    let timeline = [];
+
+    // 1ページ目：参加者情報入力
+    const participant_info = {
+      type: jsPsychSurveyText,
+      questions: [
+        {
+          prompt: '参加者IDを入力してください（任意の半角英数字）:',
+          placeholder: 'example01',
+          required: true,
+          name: 'subject_id'
+        }
+      ],
+      button_label: '実験に進む',
+      on_finish: function(data) {
+        // 入力データを取得し、グローバルプロパティに割り当て
+        const subject_id = data.response.subject_id;
+        jsPsych.data.addProperties({ subject_id: subject_id });
+      }
+    };
+    timeline.push(participant_info);
+
+    // 2ページ目：教示画面
+    const instructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="instruction-text">
+          <h2 style="text-align: center; margin-top: 0; color: #4A90E2;">ミュラー・リヤー錯視実験</h2>
+          <p>この実験では、視覚的な錯視の測定を行います。</p>
+          <p>画面には上下に2本の図形が表示されます。</p>
+          <ul>
+            <li><strong>上の図形（標準刺激）：</strong> 長さが200pxで固定されています。羽が内向き（＞ー＜）になっています。</li>
+            <li><strong>下の図形（比較刺激）：</strong> スライダーを動かすことで長さが変化します。羽が外向き（＜ー＞）になっています。</li>
+          </ul>
+          <p>スライダーを左右にドラッグして、<strong>「下の図形の主軸の長さ」が「上の図形の主軸の長さ」と全く同じに見えるように</strong>調整してください。</p>
+          <p>ちょうど同じ長さになったと判断したら、スライダーの下に表示される確定ボタンをクリックして次の試行に進んでください。</p>
+        </div>
+      `,
+      choices: ['実験の説明を確認しました（次へ）'],
+      button_html: '<button class="jspsych-btn">%choice%</button>',
+      post_trial_gap: 500
+    };
+    timeline.push(instructions);
+
+    // 3ページ目：使用デバイス選択画面
+    const device_selection = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div style="margin-bottom: 20px;">
+          <h2 style="color: #4A90E2; margin-top: 0;">使用デバイスの確認</h2>
+          <p>この実験で使用しているデバイスを選択してください。</p>
+        </div>
+      `,
+      choices: ['パソコン (PC)', 'タブレット (Tablet)', 'スマートフォン (Smartphone)'],
+      button_html: '<button class="jspsych-btn" style="width: 100%; max-width: 280px; margin: 8px auto; display: block;">%choice%</button>',
+      on_finish: function(data) {
+        // 選択肢のインデックスを文字情報に変換して全体データに付与
+        const device_list = ['PC', 'Tablet', 'Smartphone'];
+        const selected_device = device_list[data.response];
+        jsPsych.data.addProperties({ device: selected_device });
+      },
+      post_trial_gap: 1000
+    };
+    timeline.push(device_selection);
+
+    // --- 刺激描画のメイン関数 ---
+    // キャンバス、現在の長さ、試行条件、初期値を基に描画を実行
+    function drawStimulus(c, slider_value, config, initial_value) {
+      const ctx = c.getContext('2d');
+      
+      // キャンバスのクリア
+      ctx.clearRect(0, 0, c.width, c.height);
+
+      // 描画設定の共通化
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 3.5;
+      ctx.lineCap = 'round';
+
+      // 共通の羽描画
+      function drawWings(x, y, length, angle, direction) {
+        const rad = angle * Math.PI / 180;
+        const x1 = x + direction * length * Math.cos(rad);
+        const y1 = y - length * Math.sin(rad);
+        const x2 = x + direction * length * Math.cos(rad);
+        const y2 = y + length * Math.sin(rad);
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x1, y1);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      const centerX = c.width / 2;
+      const standard_length = 200; // 標準刺激：200px固定
+
+      // 【重要】引数 slider_value が undefined 等で信頼できない場合、
+      // 画面上のスライダー要素から直接現在の値をリアルタイムに取得する
+      const sliderEl = document.querySelector('input[type="range"]') || document.getElementById('jspsych-canvas-slider-response-response');
+      
+      let comparison_length;
+      if (sliderEl) {
+        comparison_length = parseFloat(sliderEl.value);
+      } else {
+        comparison_length = parseFloat(slider_value);
+      }
+
+      // どちらも取得できなければ（完全な初期ロード時など）初期値を安全に適用する
+      if (isNaN(comparison_length)) {
+        comparison_length = initial_value;
+      }
+
+      // --- 1. 上半分：標準刺激（200px固定、内向き羽 ＞ー＜） ---
+      const y_top = c.height * 0.3;
+      const x_top_start = centerX - (standard_length / 2);
+      const x_top_end = centerX + (standard_length / 2);
+
+      // 主軸
+      ctx.beginPath();
+      ctx.moveTo(x_top_start, y_top);
+      ctx.lineTo(x_top_end, y_top);
+      ctx.stroke();
+
+      // 内向きの羽
+      drawWings(x_top_start, y_top, config.wing_length, config.angle, 1);
+      drawWings(x_top_end, y_top, config.wing_length, config.angle, -1);
+
+      // --- 2. 下半分：比較刺激（可変、外向き羽 ＜ー＞） ---
+      const y_bottom = c.height * 0.7;
+      const x_bottom_start = centerX - (comparison_length / 2);
+      const x_bottom_end = centerX + (comparison_length / 2);
+
+      // 主軸
+      ctx.beginPath();
+      ctx.moveTo(x_bottom_start, y_bottom);
+      ctx.lineTo(x_bottom_end, y_bottom);
+      ctx.stroke();
+
+      // 外向きの羽
+      drawWings(x_bottom_start, y_bottom, config.wing_length, config.angle, -1);
+      drawWings(x_bottom_end, y_bottom, config.wing_length, config.angle, 1);
+    }
+
+    // 4. 実験試行ループの作成
+    full_trials.forEach((config, index) => {
+      // 試行ごとの初期値（100px〜300pxのランダムな整数）を決定
+      const initial_value = Math.floor(Math.random() * (300 - 100 + 1)) + 100;
+      const trial_num = index + 1;
+
+      const trial = {
+        type: jsPsychCanvasSliderResponse,
+        stimulus: function(c, slider_value) {
+          // 初回および更新時の描画
+          drawStimulus(c, slider_value, config, initial_value);
+        },
+        canvas_size: [300, 600], // [height, width]
+        min: 50,
+        max: 350,
+        step: 1,
+        slider_start: initial_value,
+        slider_width: 400,
+        button_label: 'この長さで決定',
+        prompt: `<div class="trial-counter">Trial ${trial_num} / ${total_trials}</div>`,
+        
+        // スライダー要素がDOMにマウントされたのを確認して安全にリスナーを設定
+        on_load: function() {
+          const setupSliderUpdate = () => {
+            const canvas = document.querySelector('canvas') || document.getElementById('jspsych-canvas-slider-response-canvas');
+            const slider = document.querySelector('input[type="range"]') || document.getElementById('jspsych-canvas-slider-response-response');
+            
+            if (canvas && slider) {
+              const updateDrawing = () => {
+                drawStimulus(canvas, slider.value, config, initial_value);
+              };
+              
+              // ドラッグ中(input)とドラッグ終了時(change)の両方をカバー
+              slider.addEventListener('input', updateDrawing);
+              slider.addEventListener('change', updateDrawing);
+              
+              // 初期位置での強制再描画を一度走らせる
+              updateDrawing();
+            } else {
+              // DOM描画のタイミングラグを吸収するため、見つかるまでアニメーションフレームで試行
+              requestAnimationFrame(setupSliderUpdate);
+            }
+          };
+          
+          setupSliderUpdate();
+        },
+        data: {
+          task: 'adjust',
+          trial_index: trial_num,
+          standard_length: 200,
+          angle: config.angle,
+          wing_length: config.wing_length,
+          initial_slider_value: initial_value
+        },
+        on_finish: function(data) {
+          data.adjusted_length = data.response;
+          data.illusion_magnitude = data.response - 200;
+        }
+      };
+      timeline.push(trial);
+    });
+
+    // 5. 終了画面＆データサマリー
+    const feedback = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: function() {
+        const trials_data = jsPsych.data.get().filter({task: 'adjust'}).values();
+        const selected_device = jsPsych.data.get().select('device').values[0] || '未選択';
+        
+        let summary = {};
+        trials_data.forEach(d => {
+          const key = `角度: ${d.angle}°, 羽長: ${d.wing_length}px`;
+          if (!summary[key]) {
+            summary[key] = { sum: 0, count: 0 };
+          }
+          summary[key].sum += d.adjusted_length;
+          summary[key].count += 1;
+        });
+
+        let results_html = `
+          <div class="instruction-text" style="text-align: center; margin-bottom: 10px;">
+            <h2 style="color: #4A90E2; margin-top: 0;">実験が完了しました</h2>
+            <p>ご協力ありがとうございました。以下はあなたの測定結果（調整した平均ピクセル値）です。</p>
+            <p style="font-size: 0.9rem; color: #555; font-weight: bold; margin-bottom: 15px;">回答デバイス: ${selected_device}</p>
+            <p style="font-size: 0.85rem; color: #777; margin-bottom: 15px;">（※標準刺激の本来の長さは 200px です）</p>
+            <table style="margin: 0 auto 25px auto; border-collapse: collapse; text-align: left; width: 100%; max-width: 450px;">
+              <thead>
+                <tr style="border-bottom: 2px solid #ccc; background-color: #f2f2f2;">
+                  <th style="padding: 10px;">刺激条件</th>
+                  <th style="padding: 10px; text-align: right;">調整平均値 (px)</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        for (let key in summary) {
+          const avg = (summary[key].sum / summary[key].count).toFixed(1);
+          results_html += `
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 10px;">${key}</td>
+              <td style="padding: 10px; text-align: right; font-weight: bold;">${avg} px</td>
+            </tr>
+          `;
+        }
+
+        results_html += `
+              </tbody>
+            </table>
+            <p style="font-size: 0.9rem; color: #555;">※下の「データを送信して終了する」ボタンを押すと、自動的にスプレッドシートへ送信されます。</p>
+          </div>
+        `;
+        return results_html;
+      },
+      choices: ['データを送信して終了する'],
+      button_html: '<button class="jspsych-btn" style="margin-top: 15px;">%choice%</button>'
+    };
+    timeline.push(feedback);
+
+    // 実験の実行
+    jsPsych.run(timeline);
+  </script>
+</body>
+</html>
