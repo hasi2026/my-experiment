@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ミュラー・リヤー錯視調整法実験</title>
+  <!-- jsPsych CDN -->
+  <script src="https://unpkg.com/jspsych@7.3.0"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-canvas-slider-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.2"></script>
+  <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.2"></script>
+  <link rel="stylesheet" href="https://unpkg.com/jspsych@7.3.0/css/jspsych.css">
+  
+  <style>
+    body {
+      /* ミントグリーン、ペールアクア、ホワイトが溶け合う魔法のシャーベットグラデーション */
+      background: radial-gradient(circle at 50% 50%, #f0fffb 0%, #e6f9ff 60%, #d5f7ed 100%);
+      color: #234a3e; /* 柔らかく深みのあるディープミントグリーン */
+      font-family: 'Hiragino Maru Gothic ProN', 'Yu Gothic UI', 'Meiryo', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    
+    .jspsych-content-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 15px;
+      box-sizing: border-box;
+    }
+
+    .jspsych-content {
+      width: 100%;
+      max-width: 650px;
+      padding: 35px 24px;
+      background: rgba(255, 255, 255, 0.95);
+      /* 妖精の羽のような極小ミントドットパターン */
+      background-image: radial-gradient(rgba(127, 255, 212, 0.25) 1.5px, transparent 0);
+      background-size: 24px 24px;
+      border-radius: 28px;
+      border: 3px solid #7fffd4; /* ミントグリーンの甘い枠 */
+      box-shadow: 
+        0 15px 35px -5px rgba(127, 255, 212, 0.25), 
+        0 10px 15px -6px rgba(175, 238, 238, 0.2),
+        inset 0 0 20px rgba(127, 255, 212, 0.1);
+      text-align: center;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* ウィッシュコア感を演出するキラキラ飾り */
+    .jspsych-content::before {
+      content: '✨';
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      font-size: 1.2rem;
+      opacity: 0.6;
+    }
+    .jspsych-content::after {
+      content: '✨';
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      font-size: 1.2rem;
+      opacity: 0.6;
+    }
+
+    canvas {
+      border: 3px solid #c1fbf0;
+      border-radius: 20px;
+      background-color: #ffffff;
+      margin: 15px auto 20px auto;
+      max-width: 100%;
+      height: auto !important;
+      display: block;
+      box-shadow: 0 8px 20px rgba(127, 255, 212, 0.1);
+    }
+
+    .trial-counter {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #61dfb6; /* くすみミント */
+      margin-bottom: 20px;
+      letter-spacing: 0.05em;
+      text-shadow: 1px 1px 0 #ffffff;
+    }
+
+    .instruction-text {
+      text-align: left;
+      line-height: 1.8;
+      margin-bottom: 30px;
+      font-size: 1.15rem;
+      color: #2e594b;
+    }
+
+    .instruction-text p {
+      margin-top: 0;
+      margin-bottom: 1.2rem;
+    }
+
+    .instruction-text ul {
+      padding-left: 20px;
+      margin-bottom: 1.8rem;
+    }
+
+    .instruction-text li {
+      margin-bottom: 0.85rem;
+    }
+
+    /* 全画面共通で使用する大振りでふわふわなリボンSVG */
+    /* リボンのサイズ: 淡い水色 #afeeee、輪郭/影 #8de1e1、中心ミント #7fffd4 */
+    #ribbon-definition {
+      display: none;
+    }
+
+    /* ミントと水色のグラデーションが映える魔法のボタン（大振りふわふわリボン付き） */
+    .btn-start, .jspsych-btn {
+      position: relative !important;
+      background: linear-gradient(135deg, #7fffd4 0%, #afeeee 100%) !important;
+      color: #1a4437 !important; /* グラデーション上で読みやすい濃いティール */
+      border: 2px solid #ffffff !important;
+      padding: 14px 28px 14px 48px !important; /* リボン設置用に左パディングを広く */
+      font-size: 1.1rem !important;
+      font-weight: bold !important;
+      border-radius: 50px !important;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 
+        0 6px 15px rgba(127, 255, 212, 0.4), 
+        0 2px 4px rgba(175, 238, 238, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.5);
+      margin: 10px;
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    /* ボタンの前にふわふわリボンを統一配置 */
+    .btn-start::before, .jspsych-btn::before {
+      content: '';
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 50,52 C 45,68 32,88 22,85 C 15,83 25,65 42,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,52 C 55,68 68,88 78,85 C 85,83 75,65 58,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,48 C 28,18 5,35 12,50 C 18,62 38,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 50,48 C 72,18 95,35 88,50 C 82,62 62,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 28,42 C 35,42 42,45 46,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><path d='M 72,42 C 65,42 58,45 54,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><rect x='42' y='40' width='16' height='16' rx='8' fill='%237fffd4' stroke='%235ce5b7' stroke-width='3.5'/></svg>");
+      background-repeat: no-repeat;
+      background-size: contain;
+    }
+
+    .btn-start:hover, .jspsych-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 
+        0 12px 20px rgba(127, 255, 212, 0.5), 
+        0 4px 8px rgba(175, 238, 238, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.6);
+      filter: brightness(1.02);
+    }
+
+    .btn-start:active, .jspsych-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 3px 6px rgba(127, 255, 212, 0.2);
+    }
+
+    /* スマホ・タブレット用の一括幅広ボタン */
+    .full-width-btn {
+      width: 100% !important;
+      max-width: 320px !important;
+      margin: 12px auto !important;
+    }
+
+    .jspsych-sliders-response-container {
+      margin-top: 25px;
+      padding: 0;
+    }
+    
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 85% !important;
+      max-width: 420px;
+      height: 12px;
+      background: #e0fcf4; /* 優しいパステルミント */
+      border-radius: 10px;
+      outline: none;
+      margin: 25px auto;
+      display: block;
+      border: 1px solid #b7f3e1;
+    }
+
+    /* Webkit (Safari, Chrome) 用の大振りでふわふわな水色リボンつまみ */
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 58px; /* 大振りに拡張 */
+      height: 58px;
+      background: transparent;
+      cursor: pointer;
+      border: none;
+      /* ふっくら大振りの淡い水色オリジナルリボン */
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 50,52 C 45,68 32,88 22,85 C 15,83 25,65 42,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,52 C 55,68 68,88 78,85 C 85,83 75,65 58,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,48 C 28,18 5,35 12,50 C 18,62 38,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 50,48 C 72,18 95,35 88,50 C 82,62 62,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 28,42 C 35,42 42,45 46,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><path d='M 72,42 C 65,42 58,45 54,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><rect x='42' y='40' width='16' height='16' rx='8' fill='%237fffd4' stroke='%235ce5b7' stroke-width='3.5'/></svg>");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      transform: translateY(-4px);
+      transition: transform 0.1s ease;
+    }
+
+    input[type=range]::-webkit-slider-thumb:active {
+      transform: translateY(-4px) scale(1.15); /* つまみ選択時にさらにふわっと弾力をもって拡大 */
+    }
+
+    /* Firefox 用の大振りでふわふわな水色リボンつまみ */
+    input[type=range]::-moz-range-thumb {
+      width: 58px;
+      height: 58px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 50,52 C 45,68 32,88 22,85 C 15,83 25,65 42,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,52 C 55,68 68,88 78,85 C 85,83 75,65 58,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,48 C 28,18 5,35 12,50 C 18,62 38,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 50,48 C 72,18 95,35 88,50 C 82,62 62,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 28,42 C 35,42 42,45 46,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><path d='M 72,42 C 65,42 58,45 54,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><rect x='42' y='40' width='16' height='16' rx='8' fill='%237fffd4' stroke='%235ce5b7' stroke-width='3.5'/></svg>");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
+      transition: transform 0.1s ease;
+    }
+
+    input[type=range]::-moz-range-thumb:active {
+      transform: scale(1.15);
+    }
+
+    .jspsych-survey-text-question {
+      margin: 24px 0;
+      text-align: left;
+    }
+    .jspsych-survey-text-question label {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #234a3e;
+      line-height: 1.6;
+    }
+    .jspsych-survey-text-question input[type="text"] {
+      width: 100%;
+      padding: 12px 18px;
+      font-size: 1.1rem;
+      border: 2px solid #b7f3e1;
+      background-color: #f7fffb;
+      border-radius: 12px;
+      box-sizing: border-box;
+      margin-top: 10px;
+      color: #1a4437;
+      transition: all 0.2s;
+    }
+    .jspsych-survey-text-question input[type="text"]:focus {
+      border-color: #7fffd4;
+      background-color: #ffffff;
+      outline: none;
+      box-shadow: 0 0 10px rgba(127, 255, 212, 0.2);
+    }
+
+    /* 文中に配置する統一リボン用 */
+    .mini-ribbon {
+      display: inline-block;
+      width: 1.7rem;
+      height: 1.7rem;
+      vertical-align: middle;
+      margin: 0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="jspsych-target"></div>
+
+  <script>
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbyevNCiuPLaKK2zA-1ksxk9BknZppTZaAIOt-n15eRIkf4_ERo6D9HcWMBQ_B12Ge5C_A/exec';
+
+    // 教示テキスト内で使う、統一されたふわふわリボンの画像コード
+    const unifiedRibbonTag = `<img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 50,52 C 45,68 32,88 22,85 C 15,83 25,65 42,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,52 C 55,68 68,88 78,85 C 85,83 75,65 58,52 Z' fill='%23afeeee' stroke='%238de1e1' stroke-width='4' stroke-linejoin='round'/><path d='M 50,48 C 28,18 5,35 12,50 C 18,62 38,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 50,48 C 72,18 95,35 88,50 C 82,62 62,58 50,48' fill='%23afeeee' stroke='%238de1e1' stroke-width='4.5' stroke-linejoin='round'/><path d='M 28,42 C 35,42 42,45 46,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><path d='M 72,42 C 65,42 58,45 54,47' fill='none' stroke='%238de1e1' stroke-width='2.5' stroke-linecap='round'/><rect x='42' y='40' width='16' height='16' rx='8' fill='%237fffd4' stroke='%235ce5b7' stroke-width='3.5'/></svg>" class="mini-ribbon">`;
+
+    // jsPsychの初期化
+    const jsPsych = initJsPsych({
+      display_element: 'jspsych-target',
+      on_finish: function() {
+        const display_element = jsPsych.getDisplayElement();
+        display_element.innerHTML = `
+          <div class="instruction-text" style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+            <h3 style="color: #61dfb6; font-size: 1.4rem; margin-bottom: 10px;">✨ データを送信しています... ✨</h3>
+            <p style="color: #6b7280;">画面を閉じずに、このまま少しだけお待ちくださいね。</p>
+          </div>
+        `;
+
+        // 保存用データの構築（既存構造の厳守）
+        const trials_data = jsPsych.data.get().filter({task: 'adjust'}).values();
+        const subject_id = jsPsych.data.get().select('subject_id').values[0] || 'unknown';
+        const timestamp = new Date().toLocaleString('ja-JP');
+
+        const response_data = trials_data.map(d => ({
+          subject_id: subject_id,
+          timestamp: timestamp,
+          angle: d.angle,
+          wing_length: d.wing_length,
+          pse: d.adjusted_length,
+          error_amount: d.illusion_magnitude
+        }));
+
+        const blob = new Blob([JSON.stringify(response_data)], { type: 'text/plain; charset=UTF-8' });
+
+        fetch(GAS_URL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: blob,
+          keepalive: true
+        })
+        .then(() => {
+          display_element.innerHTML = `
+            <div class="instruction-text" style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+              <h2 style="color: #61dfb6; font-size: 1.8rem; margin-top: 0;">実験がおわりました ☘</h2>
+              <p style="font-size: 1.2rem; font-weight: bold; color: #2e594b; margin-bottom: 20px;">すべての測定が完了しました。<br>ご協力いただき、誠にありがとうございました。✨</p>
+            </div>
+          `;
+        })
+        .catch((err) => {
+          console.warn('Fetch finished:', err);
+          display_element.innerHTML = `
+            <div class="instruction-text" style="text-align: center; margin-top: 40px; margin-bottom: 40px;">
+              <h2 style="color: #61dfb6; font-size: 1.8rem; margin-top: 0;">実験がおわりました ☘</h2>
+              <p style="font-size: 1.2rem; font-weight: bold; color: #2e594b; margin-bottom: 20px;">すべての測定が完了しました。<br>ご協力いただき、誠にありがとうございました。✨</p>
+            </div>
+          `;
+        });
+      }
+    });
+
+    // 独立変数の定義
+    const angles = [15, 75]; 
+    const shaft_lengths = [20, 50]; 
+    const repetitions = 3; 
+
+    let trial_conditions = [];
+    for (let angle of angles) {
+      for (let len of shaft_lengths) {
+        trial_conditions.push({
+          angle: angle,
+          wing_length: len
+        });
+      }
+    }
+
+    let full_trials = [];
+    for (let r = 0; r < repetitions; r++) {
+      full_trials = full_trials.concat(JSON.parse(JSON.stringify(trial_conditions)));
+    }
+    full_trials = jsPsych.randomization.shuffle(full_trials);
+
+    const total_trials = full_trials.length;
+    let timeline = [];
+
+    // 1ページ目：参加者情報入力（文言指定：参加者IDやお名前を教えてください。）
+    const participant_info = {
+      type: jsPsychSurveyText,
+      questions: [
+        {
+          prompt: '参加者IDやお名前を教えてください。',
+          placeholder: '例: お名前やニックネーム',
+          required: true,
+          name: 'subject_id'
+        }
+      ],
+      button_label: '次に進む ✦',
+      on_finish: function(data) {
+        const subject_id = data.response.subject_id;
+        jsPsych.data.addProperties({ subject_id: subject_id });
+      }
+    };
+    timeline.push(participant_info);
+
+    // 2ページ目：教示画面（指定テキスト、統一されたふわふわリボンを埋め込み）
+    const instructions = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div class="instruction-text" style="text-align: center;">
+          <h2 style="text-align: center; margin-top: 0; color: #61dfb6; font-size: 1.6rem; margin-bottom: 25px; text-shadow: 1px 1px 0 #fff;">✦ 実験の説明 ✦</h2>
+          <p style="font-size: 1.15rem; margin-bottom: 1.2rem; line-height: 1.8;">
+            実験に参加してくれてありがとうございます☘<br>
+            これから目の錯覚（さっかく）に関するテストをやってもらいます！<br>
+            <span style="font-size: 1rem; color: #789f92;">（テストは2～3分で終わります。）</span>
+          </p>
+          
+          <div style="background: rgba(224, 252, 244, 0.7); border: 2px dashed #7fffd4; border-radius: 18px; padding: 20px; text-align: left; margin: 25px auto; max-width: 480px;">
+            <p style="font-weight: bold; color: #2e594b; margin-top: 0; margin-bottom: 10px; text-align: center; font-size: 1.15rem;">～矢印のような図形の特徴～</p>
+            <ul style="list-style: none; padding-left: 0; margin: 0; line-height: 1.8; font-size: 1.1rem;">
+              <li style="margin-bottom: 8px;">✨ <strong>上の図：</strong>長さは変わらない</li>
+              <li>✨ <strong>下の図：</strong>図形の下にある${unifiedRibbonTag}を動かすと線の長さが変わる</li>
+            </ul>
+          </div>
+          
+          <div style="margin-top: 15px; margin-bottom: 15px;">
+            <p style="font-weight: bold; color: #3bc69b; font-size: 1.2rem; margin-bottom: 8px; text-shadow: 1px 1px 0 #fff;">♩ルール♩</p>
+            <p style="font-size: 1.15rem; line-height: 1.8; margin-top: 0;">
+              ${unifiedRibbonTag}を左右に動かし、上の図のせんと下の図の線が<br>
+              ぴったり同じ長さになるようにしてください。
+            </p>
+            <p style="font-size: 1.15rem; font-weight: bold; color: #1a4437; margin-top: 15px;">
+              「同じ長さになった」と思ったら、決定ボタンを押してください！
+            </p>
+          </div>
+        </div>
+      `,
+      choices: ['実験をスタートする'],
+      button_html: '<button class="jspsych-btn">%choice%</button>',
+      post_trial_gap: 500
+    };
+    timeline.push(instructions);
+
+    // 3ページ目：使用デバイス選択画面（指定テキスト）
+    const device_selection = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `
+        <div style="margin-bottom: 25px;">
+          <h2 style="color: #61dfb6; margin-top: 0; font-size: 1.5rem; text-shadow: 1px 1px 0 #fff;">使う端末の選択をしてください☘</h2>
+          <p style="font-size: 1.15rem; color: #2e594b;">このテストで使っている端末を選んでくださいね。✨</p>
+        </div>
+      `,
+      choices: ['パソコン (PC)', 'タブレット (Tablet)', 'スマートフォン (Smartphone)'],
+      button_html: '<button class="jspsych-btn full-width-btn">%choice%</button>',
+      on_finish: function(data) {
+        const device_list = ['PC', 'Tablet', 'Smartphone'];
+        const selected_device = device_list[data.response];
+        jsPsych.data.addProperties({ device: selected_device });
+      },
+      post_trial_gap: 1000
+    };
+    timeline.push(device_selection);
+
+    // --- 刺激描画のメイン関数（既存ロジック厳守） ---
+    function drawStimulus(c, slider_value, config, initial_value) {
+      const ctx = c.getContext('2d');
+      ctx.clearRect(0, 0, c.width, c.height);
+
+      ctx.strokeStyle = '#234a3e'; /* 主軸の色を全体のディープミントに調和 */
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+
+      function drawWings(x, y, length, angle, direction) {
+        const rad = angle * Math.PI / 180;
+        const x1 = x + direction * length * Math.cos(rad);
+        const y1 = y - length * Math.sin(rad);
+        const x2 = x + direction * length * Math.cos(rad);
+        const y2 = y + length * Math.sin(rad);
+
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x1, y1);
+        ctx.moveTo(x, y);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      }
+
+      const centerX = c.width / 2;
+      const standard_length = 200;
+
+      const sliderEl = document.querySelector('input[type="range"]') || document.getElementById('jspsych-canvas-slider-response-response');
+      
+      let comparison_length;
+      if (sliderEl) {
+        comparison_length = parseFloat(sliderEl.value);
+      } else {
+        comparison_length = parseFloat(slider_value);
+      }
+
+      if (isNaN(comparison_length)) {
+        comparison_length = initial_value;
+      }
+
+      // --- 1. 上半分：標準刺激（200px固定、内向き羽 ＞ー＜） ---
+      const y_top = c.height * 0.3;
+      const x_top_start = centerX - (standard_length / 2);
+      const x_top_end = centerX + (standard_length / 2);
+
+      ctx.beginPath();
+      ctx.moveTo(x_top_start, y_top);
+      ctx.lineTo(x_top_end, y_top);
+      ctx.stroke();
+
+      drawWings(x_top_start, y_top, config.wing_length, config.angle, 1);
+      drawWings(x_top_end, y_top, config.wing_length, config.angle, -1);
+
+      // --- 2. 下半分：比較刺激（可変、外向き羽 ＜ー＞） ---
+      const y_bottom = c.height * 0.7;
+      const x_bottom_start = centerX - (comparison_length / 2);
+      const x_bottom_end = centerX + (comparison_length / 2);
+
+      ctx.beginPath();
+      ctx.moveTo(x_bottom_start, y_bottom);
+      ctx.lineTo(x_bottom_end, y_bottom);
+      ctx.stroke();
+
+      drawWings(x_bottom_start, y_bottom, config.wing_length, config.angle, -1);
+      drawWings(x_bottom_end, y_bottom, config.wing_length, config.angle, 1);
+    }
+
+    full_trials.forEach((config, index) => {
+      const initial_value = Math.floor(Math.random() * (300 - 100 + 1)) + 100;
+      const trial_num = index + 1;
+
+      const trial = {
+        type: jsPsychCanvasSliderResponse,
+        stimulus: function(c, slider_value) {
+          drawStimulus(c, slider_value, config, initial_value);
+        },
+        canvas_size: [300, 600],
+        min: 50,
+        max: 350,
+        step: 1,
+        slider_start: initial_value,
+        slider_width: 400,
+        button_label: 'この長さで決定',
+        prompt: `<div class="trial-counter">✨ 現在 ${trial_num} 回目 / 全 ${total_trials} 回 ✨</div>`,
+        
+        on_load: function() {
+          const setupSliderUpdate = () => {
+            const canvas = document.querySelector('canvas') || document.getElementById('jspsych-canvas-slider-response-canvas');
+            const slider = document.querySelector('input[type="range"]') || document.getElementById('jspsych-canvas-slider-response-response');
+            
+            if (canvas && slider) {
+              const updateDrawing = () => {
+                drawStimulus(canvas, slider.value, config, initial_value);
+              };
+              
+              slider.addEventListener('input', updateDrawing);
+              slider.addEventListener('change', updateDrawing);
+              
+              updateDrawing();
+            } else {
+              requestAnimationFrame(setupSliderUpdate);
+            }
+          };
+          
+          setupSliderUpdate();
+        },
+        data: {
+          task: 'adjust',
+          trial_index: trial_num,
+          standard_length: 200,
+          angle: config.angle,
+          wing_length: config.wing_length,
+          initial_slider_value: initial_value
+        },
+        on_finish: function(data) {
+          data.adjusted_length = data.response;
+          data.illusion_magnitude = data.response - 200;
+        }
+      };
+      timeline.push(trial);
+    });
+
+    const feedback = {
+      type: jsPsychHtmlButtonResponse,
+      stimulus: function() {
+        const trials_data = jsPsych.data.get().filter({task: 'adjust'}).values();
+        const selected_device = jsPsych.data.get().select('device').values[0] || '未選択';
+        
+        let summary = {};
+        trials_data.forEach(d => {
+          const key = `角度: ${d.angle}°, 羽の長さ: ${d.wing_length}px`;
+          if (!summary[key]) {
+            summary[key] = { sum: 0, count: 0 };
+          }
+          summary[key].sum += d.adjusted_length;
+          summary[key].count += 1;
+        });
+
+        let results_html = `
+          <div class="instruction-text" style="text-align: center; margin-bottom: 10px;">
+            <h2 style="color: #61dfb6; margin-top: 0; font-size: 1.6rem; text-shadow: 1px 1px 0 #fff;">すべてのテストが終わりました ✨</h2>
+            <p style="font-size: 1.1rem; color: #2e594b;">ご協力いただき本当にありがとうございました。以下はあなたの測定結果です。</p>
+            <p style="font-size: 0.95rem; color: #3bc69b; font-weight: bold; margin-bottom: 15px;">使用デバイス: ${selected_device}</p>
+            <p style="font-size: 0.85rem; color: #789f92; margin-bottom: 15px;">（※本来のピッタリ同じ長さは 200px です）</p>
+            
+            <table style="margin: 0 auto 25px auto; border-collapse: collapse; text-align: left; width: 100%; max-width: 450px; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(127, 255, 212, 0.15); border: 2px solid #b7f3e1;">
+              <thead>
+                <tr style="background-color: #f0fffb;">
+                  <th style="padding: 12px 16px; font-weight: bold; color: #234a3e; border-bottom: 2px solid #b7f3e1;">刺激条件</th>
+                  <th style="padding: 12px 16px; text-align: right; font-weight: bold; color: #234a3e; border-bottom: 2px solid #b7f3e1;">調整した平均値 (px)</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        for (let key in summary) {
+          const avg = (summary[key].sum / summary[key].count).toFixed(1);
+          results_html += `
+            <tr style="border-bottom: 1px solid #e0fcf4; background: #ffffff;">
+              <td style="padding: 12px 16px; color: #2e594b;">${key}</td>
+              <td style="padding: 12px 16px; text-align: right; font-weight: bold; color: #1a4437;">${avg} px</td>
+            </tr>
+          `;
+        }
+
+        results_html += `
+              </tbody>
+            </table>
+            <p style="font-size: 0.95rem; color: #2e594b;">下のボタンを押すと、自動的にデータが送信されて終了します。☘</p>
+          </div>
+        `;
+        return results_html;
+      },
+      choices: ['データを送信して終了する'],
+      button_html: '<button class="jspsych-btn" style="margin-top: 15px;">%choice%</button>'
+    };
+    timeline.push(feedback);
+
+    // 実験の実行
+    jsPsych.run(timeline);
+  </script>
+</body>
+</html>
