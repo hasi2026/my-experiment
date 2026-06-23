@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>尚絅学院大学 こころラボ</title>
+    <!-- Google Fonts: Nunito & Kosugi Maru (Cute & Rounded) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // 指定されたメインカラーとアクセントカラー（寒色系のみ）
+                        paleTeal: '#AFEEEE', // パームターコイズ
+                        aquamarine: '#7FFFD4', // アクアマリン
+                        clearBlue: '#E0FFFF', // ライトシアン
+                        mintGlow: '#D8FBF0', // 柔らかなミント
+                        neutral: {
+                            50: '#F5FAF9',  // ほんのり青み・緑みをおびたクリーンなオフホワイト
+                            800: '#333D3A', // 優しく丸みのあるダークスレート
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Kosugi Maru"', '"Nunito"', '"Hiragino Maru Gothic ProN"', '"M PLUS Rounded 1c"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 寒色系のみで統一した、透明感あふれるウィッシュコア背景グラデーション */
+        body {
+            background: linear-gradient(135deg, #F0FFFF 0%, #E6FFFF 35%, #AFEEEE 70%, #7FFFD4 100%);
+            background-attachment: fixed;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 浮遊する雲や泡・星のアニメーション */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(3deg); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+        .animate-float {
+            animation: float 4s ease-in-out infinite;
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        /* 寒色系グラデーションの美しい枠線 */
+        .cool-gradient-card {
+            position: relative;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            border-radius: 2rem;
+            z-index: 1;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .cool-gradient-card::before {
+            content: '';
+            position: absolute;
+            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            background: linear-gradient(45deg, #7FFFD4, #AFEEEE, #E0FFFF, #98F5FF, #7FFFD4);
+            border-radius: 2.1rem;
+            z-index: -1;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+        .cool-gradient-card:hover::before {
+            opacity: 1;
+        }
+
+        /* シャーベットブルー・ミント系のドリーミーシャドウ */
+        .dreamy-shadow {
+            box-shadow: 0 10px 25px -5px rgba(175, 238, 238, 0.4), 0 8px 16px -6px rgba(127, 255, 212, 0.3);
+        }
+        .cool-gradient-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 35px -5px rgba(175, 238, 238, 0.6), 0 12px 24px -8px rgba(127, 255, 212, 0.5);
+        }
+
+        /* フェードイン */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="text-neutral-800 min-h-screen flex flex-col antialiased selection:bg-aquamarine selection:text-neutral-800">
+
+    <!-- 背景の装飾用エレメント（寒色系・ウィッシュコアモチーフ） -->
+    <div class="absolute top-10 left-[5%] text-4xl opacity-30 animate-float pointer-events-none select-none">☁️</div>
+    <div class="absolute top-40 right-[8%] text-3xl opacity-30 animate-float pointer-events-none select-none" style="animation-delay: 1.5s;">⭐</div>
+    <div class="absolute bottom-1/3 left-[3%] text-3xl opacity-35 animate-float pointer-events-none select-none" style="animation-delay: 2.5s;">🫧</div>
+    <div class="absolute bottom-20 right-[5%] text-4xl opacity-25 animate-float pointer-events-none select-none" style="animation-delay: 0.8s;">🌙</div>
+    <div class="absolute top-1/2 right-[2%] text-2xl opacity-35 animate-float pointer-events-none select-none" style="animation-delay: 3.2s;">🫧</div>
+
+    <!-- 涼しげなコバルト・ミントのトップバー -->
+    <div class="h-2 w-full bg-gradient-to-r from-aquamarine via-paleTeal via-clearBlue to-aquamarine"></div>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-grow max-w-4xl w-full mx-auto px-6 py-12 md:py-16 flex flex-col justify-center relative z-10">
+        
+        <!-- ヘッダーセクション -->
+        <header class="text-center mb-12 md:mb-16 animate-fade-in">
+            <span class="inline-flex items-center gap-1.5 px-4 py-1.5 mb-4 text-xs font-bold tracking-widest text-neutral-800 uppercase bg-white/75 backdrop-blur-sm rounded-full border border-paleTeal/60 shadow-sm animate-pulse-glow">
+                <span>✨</span> Psychology Laboratory <span>✨</span>
+            </span>
+            
+            <!-- 「こころラボ」メインタイトル -->
+            <h1 class="text-3xl md:text-5xl font-extrabold text-neutral-800 tracking-wider leading-snug drop-shadow-sm">
+                尚絅学院大学の<br class="md:hidden">
+                <span class="relative inline-block mt-2 md:mt-0 px-2">
+                    <span class="relative z-10 bg-gradient-to-r from-neutral-800 to-neutral-700 bg-clip-text text-transparent">こころラボ</span>
+                    <span class="absolute bottom-1 left-0 w-full h-4 bg-aquamarine/50 z-0 rounded-full"></span>
+                    <span class="absolute -top-4 -right-7 text-2xl animate-float">💫</span>
+                </span>
+            </h1>
+            
+            <!-- 挨拶文（パステル寒色カード） -->
+            <div class="mt-8 max-w-2xl mx-auto bg-white/75 backdrop-blur-md border-2 border-white p-6 md:p-8 rounded-[2rem] shadow-xl dreamy-shadow text-left relative overflow-hidden">
+                <div class="absolute -top-6 -right-6 w-16 h-16 bg-paleTeal/30 rounded-full blur-xl"></div>
+                <div class="absolute -bottom-6 -left-6 w-16 h-16 bg-aquamarine/30 rounded-full blur-xl"></div>
+                
+                <p class="text-neutral-700 leading-relaxed text-sm md:text-base font-medium relative z-10">
+                    ご訪問ありがとうございます。こころの仕組みを解き明かす心理学研究へのご協力をお願いいたします。各実験室は数分で楽しく体験・終了できます。<br>
+                    <span class="inline-block mt-2 px-2.5 py-0.5 bg-aquamarine/30 text-neutral-800 rounded-lg font-bold">
+                        📱 スマートフォンからもご参加いただけます。
+                    </span>
+                </p>
+                
+                <div class="mt-5 flex flex-wrap gap-4 text-xs text-neutral-600 border-t border-paleTeal/30 pt-4 relative z-10">
+                    <span class="flex items-center bg-white/50 px-2.5 py-1 rounded-full border border-paleTeal/20">
+                        <span class="mr-1.5 text-base">🧸</span> 簡単タップ操作
+                    </span>
+                    <span class="flex items-center bg-white/50 px-2.5 py-1 rounded-full border border-paleTeal/20">
+                        <span class="mr-1.5 text-base">🕒</span> 所要時間：約2〜3分
+                    </span>
+                    <span class="flex items-center bg-white/50 px-2.5 py-1 rounded-full border border-paleTeal/20">
+                        <span class="mr-1.5 text-base">🍬</span> どなたでも歓迎！
+                    </span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 実験リスト -->
+        <section class="space-y-6 md:space-y-8 animate-fade-in" style="animation-delay: 0.15s;">
+            <h2 class="text-sm font-bold tracking-widest text-neutral-500 uppercase text-center flex items-center justify-center gap-2">
+                <span>🌟</span> こころの実験メニュー <span>🌟</span>
+            </h2>
+
+            <div class="grid grid-cols-1 gap-6 md:gap-8">
+
+                <!-- 実験0: はじめてのWebページ -->
+                <div class="cool-gradient-card shadow-md">
+                    <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                                <span class="px-3 py-1 bg-neutral-100 text-neutral-600 text-xs font-semibold rounded-full border border-neutral-200">記念のあしあと 🐾</span>
+                                <h3 class="text-lg md:text-xl font-extrabold text-neutral-800">実験0：はじめてのWebページ</h3>
+                            </div>
+                            <p class="text-neutral-600 text-sm md:text-base leading-relaxed">
+                                第2回で作成した記念すべき「Hello World」のページです。すべてのWebデザインの第一歩がここに。
+                            </p>
+                        </div>
+                        <div class="flex shrink-0">
+                            <a href="hello_world.html" class="w-full md:w-auto inline-flex items-center justify-center px-6 py-3.5 border-2 border-paleTeal text-sm font-bold rounded-2xl text-neutral-800 bg-white hover:bg-paleTeal/20 active:bg-paleTeal/40 transition-all duration-150 shadow-sm">
+                                <span>Hello Worldを見る 🎈</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 実験1: ストループ課題 -->
+                <div class="cool-gradient-card shadow-md">
+                    <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                                <span class="px-3 py-1 bg-aquamarine/30 text-neutral-800 text-xs font-semibold rounded-full">認知しんり 🧠</span>
+                                <h3 class="text-lg md:text-xl font-extrabold text-neutral-800">実験1：ストループ課題</h3>
+                            </div>
+                            <p class="text-neutral-600 text-sm md:text-base leading-relaxed mb-3">
+                                「文字の意味」と「文字の色」のぶつかり合いを体験します。かんたんなキーボード入力であなたの脳の反応速度をテスト！
+                            </p>
+                            <span class="inline-flex items-center text-xs text-neutral-700 bg-paleTeal/30 px-3 py-1 rounded-full font-bold border border-paleTeal/40">
+                                ⏳ 所要時間：約3分
+                            </span>
+                        </div>
+                        <div class="flex shrink-0">
+                            <a href="stroop.html" class="w-full md:w-auto inline-flex items-center justify-center px-8 py-4 text-sm font-extrabold rounded-2xl text-neutral-800 bg-gradient-to-r from-aquamarine to-paleTeal hover:from-paleTeal hover:to-aquamarine active:scale-95 transition-all duration-150 shadow-md shadow-aquamarine/25">
+                                <span>実験1に参加する 🫧</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 実験2: ミュラー・リヤー錯視 -->
+                <div class="cool-gradient-card shadow-md">
+                    <div class="p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-3">
+                                <span class="px-3 py-1 bg-clearBlue/80 text-neutral-800 text-xs font-semibold rounded-full border border-paleTeal/50">めの錯覚 👀</span>
+                                <h3 class="text-lg md:text-xl font-extrabold text-neutral-800">実験2：ミュラー・リヤー錯視</h3>
+                            </div>
+                            <p class="text-neutral-600 text-sm md:text-base leading-relaxed mb-3">
+                                矢印の向きのいたずらで、同じ長さの線が違って見える不思議を測ります。スライダーを直感的に動かすビジュアルテストです。
+                            </p>
+                            <span class="inline-flex items-center text-xs text-neutral-700 bg-clearBlue/50 px-3 py-1 rounded-full font-bold border border-paleTeal/40">
+                                ⏳ 所要時間：約2分
+                            </span>
+                        </div>
+                        <div class="flex shrink-0">
+                            <a href="muller_lyer_final.html" class="w-full md:w-auto inline-flex items-center justify-center px-8 py-4 text-sm font-extrabold rounded-2xl text-neutral-800 bg-gradient-to-r from-paleTeal to-aquamarine hover:from-aquamarine hover:to-paleTeal active:scale-95 transition-all duration-150 shadow-md shadow-paleTeal/25">
+                                <span>実験2に参加する ⭐</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 注意事項・フッター -->
+        <footer class="mt-16 md:mt-24 pt-8 border-t border-paleTeal/30 text-center text-xs text-neutral-500 space-y-2 animate-fade-in" style="animation-delay: 0.3s;">
+            <p>※ 本実験で収集されるデータは、特定の個人を識別できない形で処理され、研究および講義目的以外には使用されません。</p>
+            <p class="font-semibold text-neutral-600">🫧 Welcome to こころラボ 🫧</p>
+            <p>&copy; 2026 Shokei Gakuin University. All Rights Reserved.</p>
+        </footer>
+
+    </main>
+</body>
+</html>
